@@ -1,0 +1,5 @@
+CREATE TABLE prey
+(id INT NOT NULL PRIMARY KEY,
+ name VARCHAR(100) NOT NULL,
+ bgg_url VARCHAR(200) NOT NULL,
+ last_tracked TIMESTAMP);
