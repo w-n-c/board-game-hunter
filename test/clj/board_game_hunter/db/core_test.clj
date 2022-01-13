@@ -19,20 +19,13 @@
 
 (deftest test-users
   (jdbc/with-transaction [t-conn *db* {:rollback-only true}]
-    (is (= 1 (db/create-user!
+    (is (= 1 (db/create-hunter!
               t-conn
-              {:id         "1"
-               :first_name "Sam"
-               :last_name  "Smith"
-               :email      "sam.smith@example.com"
-               :pass       "pass"}
-              {})))
-    (is (= {:id         "1"
-            :first_name "Sam"
-            :last_name  "Smith"
-            :email      "sam.smith@example.com"
-            :pass       "pass"
-            :admin      nil
-            :last_login nil
-            :is_active  nil}
-           (db/get-user t-conn {:id "1"} {})))))
+              {:login "tester"
+               :name "I go by many names"
+               :password "notagoodone"})))
+    (let [hunter (db/get-hunter-for-auth* t-conn {:login "tester"})]
+          (is (= "tester" (:login hunter)))
+          (is (= "I go by many names" (:name hunter)))
+          (is (= "notagoodone" (:password hunter)))
+          (is (instance? java.util.UUID (:id hunter))))))
