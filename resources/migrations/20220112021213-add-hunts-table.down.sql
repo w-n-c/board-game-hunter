@@ -1,1 +1,1 @@
-DROP TABLE hunts;
+DROP TABLE IF EXISTS hunts;

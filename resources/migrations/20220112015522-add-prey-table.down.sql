@@ -1,1 +1,1 @@
-DROP TABLE prey;
+DROP TABLE IF EXISTS prey;
