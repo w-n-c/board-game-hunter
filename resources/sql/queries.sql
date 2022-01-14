@@ -9,9 +9,9 @@ VALUES (:login, :name, :password)
 SELECT * FROM hunters
 WHERE login = :login
 
--- :name get-hunter* :? :1
+-- :name get-hunts-by-hunter* :? :*
 -- :doc retrieves a hunter's available information and their hunts
-SELECT hunters.name as hunter_name, prey.*
+SELECT hunters.name as hunter_name, prey.id as prey_id, prey.*
 FROM hunters
 INNER JOIN hunts
 ON hunters.id = hunts.hunter_id
@@ -28,7 +28,7 @@ WHERE id = :id
 -- :doc creates a new prey (board game) record using the given id (bgg id), name, url, bgg-url and time of last track
 INSERT INTO prey
 (id, name, bgg_url, last_tracked)
-VALUES(:id, :name, :bgg-url :last-tracked)
+VALUES(:id, :name, :bgg-url, :last-tracked)
 
 -- :name get-prey* :? :1
 -- :doc retrieves a prey's bgg information
