@@ -2,30 +2,51 @@
   (:require [re-frame.core :as rf]
             [kee-frame.core :as kf]
             [ajax.core :as http]
-            [markdown.core :refer [md->html]]))
-
-
-(kf/reg-controller
-  ::home-controller
-  {:params (constantly true)
-   :start  [::load-home-page]})
+            [board-game-hunter.components :refer [text-input submit-btn]]
+            [board-game-hunter.utils.debounce]
+            [strict-uri-encode :as encode]))
 
 (rf/reg-sub
-  :docs
+  ::search
   (fn [db _]
-    (:docs db)))
+    (::search db)))
 
-(kf/reg-chain
-  ::load-home-page
-  (fn [_ _]
-    {:http-xhrio {:method          :get
-                  :uri             "/docs"
-                  :response-format (http/raw-response-format)
-                  :on-failure      [:common/set-error]}})
-  (fn [{:keys [db]} [_ docs]]
-    {:db (assoc db :docs docs)}))
+(rf/reg-sub
+  ::set-error
+  (fn [db _]
+    (::set-error db)))
+
+(rf/reg-event-db
+  ::set-error
+  (fn [db [_ error]]
+    (println error)
+    (assoc db ::set-error error)))
+
+(rf/reg-sub
+  ::search-results
+  (fn [db _]
+    (::search-results db)))
+
+(rf/reg-event-db
+  ::set-search-results
+  (fn [db [_ response]]
+       (assoc db ::search-results response)))
+
+(rf/reg-event-fx
+  ::set-search
+  (fn [{:keys [db]} [_ search]]
+    (merge
+      {:db (assoc db ::search search)}
+      (when-not true ;disabled until endpoint is created (= "" search)
+      {:http-xhrio {:method          :get
+                    :uri             (str "/api/bgg/search?q=" search)
+                    :response-format (http/transit-response-format)
+                    :on-failure      [::set-error]
+                    :on-success      [::set-search-results]}}))))
 
 (defn home-page []
   [:section.section>div.container>div.content
-   (when-let [docs @(rf/subscribe [:docs])]
-     [:div {:dangerouslySetInnerHTML {:__html (md->html docs)}}])])
+   [text-input {:attrs {:name "search"
+                        :prompt "Enter the name of the game you would like to track"}
+                :subscription (rf/subscribe [::search])
+                :dispatch {:on-change #(rf/dispatch [:bgh/debounce [::set-search %] 300])}}]])
