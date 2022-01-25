@@ -6,7 +6,7 @@
               [clojure.java.io :as io]])))
 #?(:clj
    (defn home-page [request]
-     (layout/render request "home.html")))
+     (layout/render request "index.html")))
 
 (defn app-routes []
   [""

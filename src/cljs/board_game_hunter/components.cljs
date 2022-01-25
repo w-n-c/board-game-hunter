@@ -2,21 +2,21 @@
   (:require
     [reagent.core :as r]))
 
-(defn text-input [{:keys [attrs subscription dispatch]}]
-  (let [local (r/atom (or @subscription ""))
-        on-blur   (or (:on-blur   dispatch) (fn []))
-        on-change (or (:on-change dispatch) (fn []))]
+(defn text-input [{:keys [attrs subscription]
+                   {:keys [on-change on-blur]} :dispatch}]
+  (let [local (r/atom nil)
+        value (r/track #(or @local @subscription ""))]
     (fn []
       [:label
         (:prompt attrs)
         [:input.input
           (merge attrs
             {:type :text
-            :on-change #(->> (.. % -target -value)
-                             (reset! local)
-                             (on-change))
-            :on-blur #(on-blur @local)
-            :value @local})]])))
+            :on-change #(cond->> (.. % -target -value)
+                                 true      (reset! local)
+                                 on-change (on-change))
+            :on-blur #(if on-blur (on-blur @local))
+            :value @value})]])))
 
 (defn submit-btn [{:keys [attrs dispatch]}]
   (fn []
