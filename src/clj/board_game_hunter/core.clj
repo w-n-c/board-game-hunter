@@ -3,6 +3,7 @@
     [board-game-hunter.handler :as handler]
     [board-game-hunter.nrepl :as nrepl]
     [luminus.http-server :as http]
+    [org.httpkit.sni-client :as sni-client] ; Needs Java >= 8, http-kit >= 2.4.0-alpha6
     [luminus-migrations.core :as migrations]
     [board-game-hunter.config :refer [env]]
     [clojure.tools.cli :refer [parse-opts]]
@@ -21,6 +22,9 @@
 (def cli-options
   [["-p" "--port PORT" "Port number"
     :parse-fn #(Integer/parseInt %)]])
+
+(defn enable-sni []
+  (alter-var-root #'org.httpkit.client/*default-client* (fn [_] sni-client/default-client)))
 
 (mount/defstate ^{:on-reload :noop} http-server
   :start
@@ -52,6 +56,7 @@
                         (parse-opts cli-options)
                         mount/start-with-args
                         :started)]
+    (enable-sni)
     (log/info component "started"))
   (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app)))
 

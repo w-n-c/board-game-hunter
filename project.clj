@@ -21,6 +21,7 @@
                  [json-html "0.4.7"]
                  [kee-frame "1.1.2" :exclusions [metosin/reitit-core org.clojure/core.async]]
                  [luminus-http-kit "0.1.9"]
+                 [http-kit "2.5.3"]
                  [luminus-migrations "0.7.1"]
                  [luminus-transit "0.1.3"]
                  [luminus/ring-ttl-session "0.3.3"]
