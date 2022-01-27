@@ -25,7 +25,7 @@
                  [luminus-migrations "0.7.1"]
                  [luminus-transit "0.1.3"]
                  [luminus/ring-ttl-session "0.3.3"]
-                 [markdown-clj "1.10.7"]
+                 [metosin/jsonista "0.3.5"]
                  [metosin/muuntaja "0.6.8"]
                  [metosin/reitit "0.5.15"]
                  [metosin/ring-http-response "0.9.3"]
@@ -57,7 +57,7 @@
   :target-path "target/%s/"
   :main ^:skip-aot board-game-hunter.core
 
-  :plugins [] 
+  :plugins [[lein-pprint "1.3.2"]]
   :clean-targets ^{:protect false}
   [:target-path "target/cljsbuild"]
   
