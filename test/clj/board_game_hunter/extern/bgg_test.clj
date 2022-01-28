@@ -18,9 +18,10 @@
                 (fn [_ _] (promisify {:status 200 :body (slurp (io/resource "bgg-samples/type-ahead.json"))}))]
     (testing "type-ahead"
       (let [response (bgg/type-ahead ["final"])
-            game (second (:body response))]
-        (is (= 200 (:status response)))
+            game (second response)]
+        (is (= "277659" (:id game)))
         (is (= "Final Girl" (:name game)))
-        (is (= 2021 (:yearpublished game)))
-        (is (= 6520382 (:rep_imageid game)))
-        (is (= "/boardgame/277659/final-girl" (:href game)))))))
+        (is (= 2021 (:year-published game)))
+        (is (= 6520382 (:image-id game)))
+        (is (= "/boardgame/277659/final-girl" (:href game)))
+        (is (= 5 (count game)))))))
