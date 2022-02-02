@@ -8,6 +8,7 @@
     [reitit.ring.middleware.multipart :as multipart]
     [reitit.ring.middleware.parameters :as parameters]
     [board-game-hunter.middleware.formats :as formats]
+    [board-game-hunter.extern.bgg :as bgg]
     [ring.util.http-response :as response]))
 
 (defn service-routes []
@@ -43,6 +44,13 @@
      {:get (swagger-ui/create-swagger-ui-handler
              {:url "/api/swagger.json"
               :config {:validator-url nil}})}]]
+   ["/search"
+    {:get {:summary "search for board game on bgg"
+           :parameters {:query {:s string?}}
+           :responses  {200 {:body seq?}}
+           :handler (fn [{{{:keys [s]} :query} :parameters}]
+                      {:status 200
+                       :body (bgg/type-ahead s)})}}]
    ["/ping"
     {:get (constantly (response/ok {:message "pong"}))}]
 
@@ -61,6 +69,5 @@
              :responses {200 {:body {:total pos-int?}}}
              :handler (fn [{{{:keys [x y]} :body} :parameters}]
                         {:status 200
-                         :body {:total (+ x y)}})}}]]
-   ])
+                         :body {:total (+ x y)}})}}]]])
 
