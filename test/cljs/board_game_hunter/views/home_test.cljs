@@ -23,22 +23,24 @@
       (async done
           ((get-in home-page [1 1 :dispatch :on-change]) "debounced")
           (js/setTimeout #(is (= "Neuroshima" @search))
-                         300)
+                         280)
           (js/setTimeout #(do
                             (is (= "debounced" @search))
                             (done))
-                         305))))
+                         320))))
 
 
 (deftest test-home-re-frame
   (rf-test/run-test-sync
     (let [search         (rf/subscribe [::home/search])
           error          (rf/subscribe [::home/error])
-          search-results (rf/subscribe [::home/search-results])]
+          search-results (rf/subscribe [::home/search-results])
+          searching?     (rf/subscribe [::home/searching?])]
       ; Assert initial state
       (is (nil? @search))
       (is (nil? @error))
       (is (nil? @search-results))
+      (is (not  @searching?))
 
       ; Dispatch event
       (rf/dispatch [::home/set-search "Neuroshima"])
@@ -46,6 +48,18 @@
       (rf/dispatch [::home/set-search-results "temp"])
 
       ; Assert new state
+      (is @searching?)
       (is (= "Neuroshima" @search))
       (is (= "403 Unauthorized" @error))
       (is (= "temp" @search-results)))))
+
+(deftest test-home-search-fx
+    (let [effects        (home/set-search {:db {}} [::home/search "Neuroshima"])
+          ajax-fx        (:http-xhrio effects)
+          db-fx          (:db effects)]
+
+      (is (= "Neuroshima" (::home/search db-fx)))
+      (is (= :get (:method ajax-fx)))
+      (is (= "/api/bgg/search?s=Neuroshima" (:uri ajax-fx)))
+      (is (= [::home/set-error] (:on-failure ajax-fx)))
+      (is (= [::home/set-search-results] (:on-success ajax-fx)))))

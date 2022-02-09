@@ -44,7 +44,7 @@
      {:get (swagger-ui/create-swagger-ui-handler
              {:url "/api/swagger.json"
               :config {:validator-url nil}})}]]
-   ["/search"
+   ["/bgg/search"
     {:get {:summary "search for board game on bgg"
            :parameters {:query {:s string?}}
            :responses  {200 {:body seq?}}
