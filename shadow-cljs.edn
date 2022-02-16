@@ -1,4 +1,5 @@
 {:nrepl {:port 7002}
+ :dev-http {8021 "target/test/browser"}
  :builds
         {:app
                {:target     :browser
@@ -6,9 +7,10 @@
                 :asset-path "/js"
                 :modules    {:app {:entries [board-game-hunter.app]}}
                 :devtools   {:watch-dir "resources/public"
-                             :preloads  [re-frisk.preload]}
+                             :preloads [re-frisk.preload]}
                 :dev        {:closure-defines {"re_frame.trace.trace_enabled_QMARK_" true}}
                 :release    {}}
-         :test {:target  :node-test, :output-to "target/test/test.js"
+         :test {:target :browser-test
+                :test-dir "target/test/browser"
                 :autorun true}}
  :lein  {:profile "+dev"}}
