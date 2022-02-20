@@ -3,7 +3,8 @@
     [kee-frame.core :as kf]
     [reagent.core :as r]
     [re-frame.core :as rf]
-    [board-game-hunter.views.home :as home]))
+    [board-game-hunter.views.home :refer [home-page]]
+    [board-game-hunter.views.prey :refer [prey-page]]))
 
 (defn nav-link [title page]
   [:a.navbar-item
@@ -36,6 +37,7 @@
   [:div
    [navbar]
    [kf/switch-route (fn [route] (get-in route [:data :name]))
-    :home home/home-page
+    :home home-page
     :about about-page 
-    nil [:div ""]]])
+    :prey prey-page
+    nil [:div "something has gone terribly wrong"]]])

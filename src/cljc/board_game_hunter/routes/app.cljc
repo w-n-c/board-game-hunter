@@ -13,6 +13,7 @@
    #?(:clj {:middleware [middleware/wrap-csrf middleware/wrap-formats]
             :get        home-page})
    ["/" :home]
+   ["/prey/:id/:name" :prey]
    ["/about" :about]
    ["/docs" #?(:clj {:get (fn [_]
                             (-> (response/ok (-> "docs/docs.md" io/resource slurp))
