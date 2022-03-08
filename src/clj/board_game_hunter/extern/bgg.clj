@@ -10,13 +10,17 @@
 
 (def num-of-results 10)
 
+(def mapper-factory
+  (memoize
+    (fn [content-type]
+      (let [mapper (case content-type
+                         :xml (j/object-mapper {:mapper (XmlMapper.) :decode-key-fn true})
+                         :json j/keyword-keys-object-mapper)]
+        (fn [input] (j/read-value input mapper))))))
 
+(defn xml->response [xml]
+  ((mapper-factory :xml) xml))
 
-(defn json->map [json]
-  (j/read-value json j/keyword-keys-object-mapper))
-
-(defn json->items [json]
-  (:items (json->map json)))
 
 (defn just-essentials [item]
   (select-keys item #{:yearpublished :rep_imageid :id :name :href}))
@@ -27,9 +31,16 @@
 (defn rename-path [item]
   (assoc item :href (str/replace (:href item) "boardgame" "prey")))
 
-(defn json->results [json]
-  (map (comp rename-path bgg-keys->app-keys just-essentials) (json->items body)))
+(defn typeahead-json->bgg-results [json]
+  (:items ((mapper-factory :json) json)))
 
+(defn bgg-results->bgh-results [bgg-results]
+  (map (comp rename-path bgg-keys->app-keys just-essentials)))
+
+(defn typeahead-json->bgh-results [json]
+  (-> json
+      (typeahead-json->bgg-results)
+      (bgg-results->bgh-results)))
 
 ; BGGs xmlapi does have a search method but it does not (to my knowledge) have pagination or result
 ; limiting. At time of writing, "final" returns 753 results in alphabetical order- not ideal for a
@@ -44,22 +55,19 @@
 
   (if (or error (not= 200 status))
     (throw (ex-info "Type ahead request failed" resp))
-    (json->results body))))
+     (typeahead-json->bgg-results body))))
 
-(def xml-mapper (j/object-mapper {:mapper (XmlMapper.) :decode-key-fn true}))
-
-(defn xml->results [xml]
-  (j/read-value xml xml-mappoer))
 
 (defn prey-details [prey-id]
   (let [opts
         {:query-params {"id" prey-id}}
         {:keys [status body error] :as resp}
-        @(http/get "https://boardgamegeek.com/xmlapi2/thing")]
+        @(http/get "https://boardgamegeek.com/xmlapi2/thing" opts)]
 
     (if (or error (not= 200 status))
       (throw (ex-info "Prey details request failed", resp))
-      (xml->results body))))
+      (xml->response body))))
+
 
 ;; details example 
 ;(clojure.pprint/write (j/read-value
