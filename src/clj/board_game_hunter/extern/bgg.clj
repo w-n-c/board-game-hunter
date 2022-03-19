@@ -20,11 +20,6 @@
                          :json j/keyword-keys-object-mapper)]
         (fn [input] (j/read-value input mapper))))))
 
-; The mapper does not handle array-as-multiple-of-same-tag xml well, which BGG does use extensively.
-; It is (probably) configurably fixable but, fortunately, we do not need any of that array data.
-(defn xml->response [xml]
-  ((mapper-factory :xml) xml))
-
 (defn bgg-results-filter [item]
   (select-keys item #{:yearpublished :rep_imageid :id :name :href}))
 
@@ -47,11 +42,13 @@
              bgg-keys->bgh-keys
              bgg-results-filter) bgg-results))
 
-(def typeahead-json->prey-results
-  (comp
-      typeahead-json->bgg-results
-      bgg-results->prey-results))
+(defn typeahead-json->prey-results [json]
+  (-> json
+      (typeahead-json->bgg-results)
+      (bgg-results->prey-results)))
 
+; The mapper does not handle array-as-multiple-of-same-tag xml well, which BGG does use extensively.
+; It is (probably) configurably fixable but, fortunately, we do not need any of that array data.
 (defn bgg-details-xml->bgg-details [xml]
   (:item ((mapper-factory :xml) xml)))
 
