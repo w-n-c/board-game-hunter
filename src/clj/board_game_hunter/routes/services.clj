@@ -50,7 +50,13 @@
            :responses  {200 {:body seq?}}
            :handler (fn [{{{:keys [s]} :query} :parameters}]
                       {:status 200
-                       :body (bgg/type-ahead s)})}}]
+                       :body (bgg/typeahead s)})}}]
+   ["/prey/:id"
+    {:get {:summary "load bgg details of board game"
+           :responses {200 {:body map?}}
+           :handler (fn [{{:keys [id]} :path-params}]
+                      {:status 200
+                       :body (bgg/prey-details id)})}}]
    ["/ping"
     {:get (constantly (response/ok {:message "pong"}))}]
 
