@@ -25,7 +25,7 @@
       (is (= 200 (:status response)))
       (is (= 30 (:total (parse-json (:body response)))))))
   (testing "search service"
-    (with-redefs [bgg/type-ahead
+    (with-redefs [bgg/typeahead
                   (fn [search] (lazy-seq [{:id "277659"
                                            :name "Final Girl"}]))]
     (let [response ((app) (request :get "/api/bgg/search?s=final"))
