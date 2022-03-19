@@ -50,7 +50,7 @@
            :responses  {200 {:body seq?}}
            :handler (fn [{{{:keys [s]} :query} :parameters}]
                       {:status 200
-                       :body (bgg/type-ahead s)})}}]
+                       :body (bgg/typeahead s)})}}]
    ["/ping"
     {:get (constantly (response/ok {:message "pong"}))}]
 
