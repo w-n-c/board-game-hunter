@@ -61,7 +61,8 @@
                         :prompt "Enter the name of the game you would like to track"}
                 :subscription (rf/subscribe [::search])
                 :dispatch {:on-change #(rf/dispatch [:bgh/debounce [::set-search %] 300])}}]
-   [:div.container.dropdown {:class (if @(rf/subscribe [::searching?]) "is-active")}
+   [:div.container.dropdown {:class (if @(rf/subscribe [::searching?]) "is-active")
+                             :style {:display "flex"}}
     [:div.dropdown-menu {:role "menu"}
      [:div.dropdown-content
       (for [{:keys [id href name year-published]} @(rf/subscribe [::search-results])]
