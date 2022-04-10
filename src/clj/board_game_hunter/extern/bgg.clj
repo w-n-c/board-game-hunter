@@ -8,17 +8,23 @@
     [jsonista.core :as j]
     [org.httpkit.client :as http])
   (:import
-    [com.fasterxml.jackson.dataformat.xml XmlMapper]))
+    [com.fasterxml.jackson.dataformat.xml XmlMapper]
+    [com.fasterxml.jackson.databind JsonNode ObjectMapper]))
 
 (def typeahead-result-count 10)
 
-(def mapper-factory
-  (memoize
-    (fn [content-type]
-      (let [mapper (case content-type
-                         :xml (j/object-mapper {:mapper (XmlMapper.) :decode-key-fn true})
-                         :json j/keyword-keys-object-mapper)]
-        (fn [input] (j/read-value input mapper))))))
+(defn read-json [input]
+  (j/read-value input j/keyword-keys-object-mapper))
+
+(extend-protocol j/ReadValue
+  JsonNode
+  (-read-value [this ^ObjectMapper mapper]
+    (.treeToValue mapper this ^Class Object)))
+
+(defn read-xml [input]
+  (let [xml-mapper (XmlMapper.)
+        j-mapper (j/object-mapper {:mapper xml-mapper :decode-key-fn true})]
+    (j/read-value (.readTree xml-mapper input) j-mapper)))
 
 (defn bgg-results-filter [item]
   (select-keys item #{:yearpublished :rep_imageid :id :name :href}))
@@ -35,7 +41,7 @@
   (assoc item :href (str/replace (:href item) "boardgame" "prey")))
 
 (defn typeahead-json->bgg-results [json]
-  (:items ((mapper-factory :json) json)))
+  (:items (read-json json)))
 
 (defn bgg-results->prey-results [bgg-results]
   (map (comp rename-path
@@ -50,7 +56,7 @@
 ; The mapper does not handle array-as-multiple-of-same-tag xml well, which BGG does use extensively.
 ; It is (probably) configurably fixable but, fortunately, we do not need any of that array data.
 (defn bgg-details-xml->bgg-details [xml]
-  (:item ((mapper-factory :xml) xml)))
+  (:item (read-xml xml)))
 
 (defn prey-details-filter [prey]
   (select-keys prey #{:image :description :name :maxplayers :minplayers :playingtime :minplaytime :yearpublished :thumbnail}))
@@ -77,11 +83,14 @@
       (if (number? n) n input))
     input))
 
+; value-flatten destroys a lot of the information provided in the prey-details api
+; fortunately we do not need much information on the game: we can link to bgg for that
 (defn reformat [input] (w/postwalk (comp value-flatten string->number) input))
-
 
 (defn bgg-details-xml->prey-details [xml]
   (-> xml
+      (str/replace "&amp;#10;" "\n")
+      (str/replace #"&amp;mdash;" " --")
       (bgg-details-xml->bgg-details)
       (bgg-details->prey-details)
       (reformat)))
