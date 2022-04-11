@@ -24,11 +24,8 @@
   []
   (rf/clear-subscription-cache!)
   (kf/start! {:routes         (app/app-routes)
-              :hash-routing?  true
-              #_#_
               :log            {:level        :debug
                                :ns-blacklist ["kee-frame.event-logger"]}
-              :initial-db     {}
               :root-component [view/root-component]}))
 
 (defn init! []
