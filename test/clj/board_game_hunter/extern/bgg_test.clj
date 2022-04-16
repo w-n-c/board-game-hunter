@@ -28,12 +28,12 @@
                 (fn [_ _] (promisify {:status 200 :body (slurp (io/resource "bgg-samples/game-details.xml"))}))]
     (testing "prey details"
       (let [response (bgg/prey-details "277659")]
-        (is (= "Final Girl" (:name response)))
-        (is (= 1 (:min-players response)))
-        (is (= 1 (:max-players response)))
-        (is (= 60 (:play-time response)))
-        (is (= 20 (:min-play-time response)))
-        (is (= 2021 (:year-published response)))
+        (is (= "Final Girl" (:value (:name response))))
+        (is (= "1" (:min-players response)))
+        (is (= "1" (:max-players response)))
+        (is (= "60" (:play-time response)))
+        (is (= "20" (:min-play-time response)))
+        (is (= "2021" (:year-published response)))
         (is (not (empty? (:description response))))
         (is (not (empty? (:image response))))
         (is (not (empty? (:thumbnail response))))))))

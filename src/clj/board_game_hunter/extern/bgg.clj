@@ -30,12 +30,13 @@
   (select-keys item #{:yearpublished :rep_imageid :id :name :href}))
 
 (defn bgg-keys->bgh-keys [item]
-  (rename-keys item {:yearpublished :year-published
-                     :rep_imageid   :image-id
-                     :playingtime   :play-time
-                     :minplaytime   :min-play-time
-                     :minplayers    :min-players
-                     :maxplayers    :max-players}))
+  (rename-keys item {:yearpublished       :year-published
+                     :rep_imageid         :image-id
+                     :playingtime         :play-time
+                     :minplaytime         :min-play-time
+                     :minplayers          :min-players
+                     :maxplayers          :max-players
+                     :marketplacelistings :listings}))
 
 (defn rename-path [item]
   (assoc item :href (str/replace (:href item) "boardgame" "prey")))
@@ -59,33 +60,22 @@
   (:item (read-xml xml)))
 
 (defn prey-details-filter [prey]
-  (select-keys prey #{:image :description :name :maxplayers :minplayers :playingtime :minplaytime :yearpublished :thumbnail}))
+  (select-keys prey #{:marketplacelistings :image :description :name :maxplayers :minplayers :playingtime :minplaytime :yearpublished :thumbnail}))
 
 (defn bgg-details->prey-details [prey]
   ((comp bgg-keys->bgh-keys prey-details-filter) prey))
 
 (defn is-value-map [input]
   (and (map? input)
+       (= 1 (count input))
        (contains? input :value)))
 
-; because we do not check if the map only contains :value, this will wipe attributes associated
-; with the xml tag. This is a deliberate choice to have full consistency easily made because
-; we do not use any keys with valuable attributes
 (defn value-flatten [input]
   (if (is-value-map input)
     (:value input)
     input))
-  ;(w/postwalk #(if (is-value-map %) (:value %) %) input))
 
-(defn string->number [input]
-  (if (string? input)
-    (let [n (read-string input)]
-      (if (number? n) n input))
-    input))
-
-; value-flatten destroys a lot of the information provided in the prey-details api
-; fortunately we do not need much information on the game: we can link to bgg for that
-(defn reformat [input] (w/postwalk (comp value-flatten string->number) input))
+(defn reformat [input] (w/postwalk value-flatten input))
 
 (defn bgg-details-xml->prey-details [xml]
   (-> xml
@@ -110,14 +100,14 @@
     (if (or error (not= 200 status))
       (throw (ex-info "Type ahead request failed" resp))
       (typeahead-json->prey-results body))))
-
 ; Loads details about a given game from xml api (player count, playtime, image urls etc)
 (defn prey-details [prey-id]
   (let [opts
-        {:query-params {"id" prey-id}}
+        {:query-params {"id" prey-id "marketplace" 1}}
         {:keys [status body error] :as resp}
         @(http/get "https://boardgamegeek.com/xmlapi2/thing" opts)]
 
     (if (or error (not= 200 status))
       (throw (ex-info "Prey details request failed", resp))
       (bgg-details-xml->prey-details body))))
+
