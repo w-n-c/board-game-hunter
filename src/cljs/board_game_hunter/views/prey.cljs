@@ -26,11 +26,32 @@
   (fn [db _]
     (::prey-details db)))
 
+(defn listing-table [listings]
+  [:table.table
+   [:thead>tr
+    [:th "link"]
+    [:th "condition"]
+    [:th "price"]
+    [:th "notes"]]
+   [:tbody
+    (for [{:keys [link condition notes price]} listings]
+      (let [href (:href link)
+            cost (:value price)
+            currency (:currency price)]
+        [:tr 
+          [:td>a {:href href} href]
+          [:td (cond 
+                 (= condition "likenew") "like new"
+                 (= condition "verygood") "very good"
+                 :else condition)]
+          [:td cost " " currency]
+          [:td notes]]))]])
+
 (defn prey-page [{{:keys [id name]} :path-params}]
   [:section.section>div.container>div.content
    (let [prey-details @(rf/subscribe [::prey-details])
          api-name     (:name prey-details)
-         display-name (if (list? api-name) (first api-name) api-name)]
+         display-name (:value (if (coll? api-name) (first api-name) (api-name)))]
      [:div.container
       [:h2 display-name " (" (:year-published prey-details) ") "]
       [:img {:src (:thumbnail prey-details)}]
@@ -41,4 +62,5 @@
       [:section.container
        [:br]
        [:h3 "Description"]
-       [:p (:description prey-details)]]])])
+       [:p (:description prey-details)]]
+      (listing-table (:listing (:listings prey-details)))])])
