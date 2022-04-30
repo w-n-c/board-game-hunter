@@ -100,6 +100,7 @@
     (if (or error (not= 200 status))
       (throw (ex-info "Type ahead request failed" resp))
       (typeahead-json->prey-results body))))
+
 ; Loads details about a given game from xml api (player count, playtime, image urls etc)
 (defn prey-details [prey-id]
   (let [opts
@@ -108,6 +109,17 @@
         @(http/get "https://boardgamegeek.com/xmlapi2/thing" opts)]
 
     (if (or error (not= 200 status))
-      (throw (ex-info "Prey details request failed", resp))
+      (throw (ex-info "Prey details request failed" resp))
       (bgg-details-xml->prey-details body))))
 
+(defn auction-search [prey-id]
+  (let [opts
+        {:query-params {"id" prey-id "type" "things"}}
+        {:keys [status body error] :as resp}
+        @(http/get "https://api.geekdo.com/api/geekshopper" opts)]
+    (if (or error (not= 200 status))
+      (throw (ex-info "Auction request failed" resp))
+      body)))
+
+(def prey-id 5737)
+(def auction-result (auction-search prey-id))
