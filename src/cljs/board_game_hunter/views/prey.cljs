@@ -50,8 +50,7 @@
 (defn prey-page [{{:keys [id name]} :path-params}]
   [:section.section>div.container>div.content
    (let [prey-details @(rf/subscribe [::prey-details])
-         api-name     (:name prey-details)
-         display-name (:value (if (coll? api-name) (first api-name) (api-name)))]
+         display-name (:value (first (filter #(= "primary" (:type %)) (:name prey-details))))]
      [:div.container
       [:h2 display-name " (" (:year-published prey-details) ") "]
       [:img {:src (:thumbnail prey-details)}]
