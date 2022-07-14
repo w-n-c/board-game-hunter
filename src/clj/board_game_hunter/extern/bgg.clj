@@ -1,25 +1,24 @@
 (ns board-game-hunter.extern.bgg
   (:require
-    [clojure.set :refer [rename-keys]]
-    [clojure.string :as str]
-    [clojure.xml :as xml]
-    [clojure.walk :as w]
-    [clojure.java.io :as io]
-    [jsonista.core :as j]
-    [org.httpkit.client :as http])
+   [clojure.set :refer [rename-keys]]
+   [clojure.string :as str]
+   [clojure.walk :as w]
+   [jsonista.core :as j]
+   [org.httpkit.client :as http])
   (:import
-    [com.fasterxml.jackson.dataformat.xml XmlMapper]
-    [com.fasterxml.jackson.databind JsonNode ObjectMapper]))
+   [org.apache.commons.text StringEscapeUtils]
+   [com.fasterxml.jackson.dataformat.xml XmlMapper]
+   [com.fasterxml.jackson.databind JsonNode ObjectMapper]))
 
 (def typeahead-result-count 10)
-
-(defn read-json [input]
-  (j/read-value input j/keyword-keys-object-mapper))
 
 (extend-protocol j/ReadValue
   JsonNode
   (-read-value [this ^ObjectMapper mapper]
     (.treeToValue mapper this ^Class Object)))
+
+(defn read-json [input]
+  (j/read-value input j/keyword-keys-object-mapper))
 
 (defn read-xml [input]
   (let [xml-mapper (XmlMapper.)
@@ -30,13 +29,21 @@
   (select-keys item #{:yearpublished :rep_imageid :id :name :href}))
 
 (defn bgg-keys->bgh-keys [item]
-  (rename-keys item {:yearpublished       :year-published
-                     :rep_imageid         :image-id
-                     :playingtime         :play-time
-                     :minplaytime         :min-play-time
-                     :minplayers          :min-players
-                     :maxplayers          :max-players
-                     :marketplacelistings :listings}))
+  (w/postwalk-replace {:yearpublished       :year-published
+                       :rep_imageid         :image-id
+                       :playingtime         :play-time
+                       :minplaytime         :min-play-time
+                       :minplayers          :min-players
+                       :maxplayers          :max-players
+                       :marketplacelistings :listings
+                       :marketinfo          :market-info
+                       :lastcomment         :last-comment
+                       :lastbid             :last-bid
+                       :userid              :user-id
+                       :marketrating        :market-rating
+                       :traderating         :trade-rating
+                       :postdate            :post-date}
+                      item))
 
 (defn rename-path [item]
   (assoc item :href (str/replace (:href item) "boardgame" "prey")))
@@ -70,20 +77,53 @@
        (= 1 (count input))
        (contains? input :value)))
 
-(defn value-flatten [input]
+(defn flatten-value [input]
   (if (is-value-map input)
     (:value input)
     input))
 
-(defn reformat [input] (w/postwalk value-flatten input))
+(defn flatten-value-only [input] (w/postwalk flatten-value input))
+
+(def keys-to-unescape #{:description :notes})
+
+(defn unescape [input]
+  (StringEscapeUtils/unescapeHtml4 input))
+
+(defn unescape-walked-input [input]
+  (if (and (vector? input)
+           (contains? keys-to-unescape (first input)))
+    [(first input) (unescape (second input))]
+    input))
+
+(defn unescape-content [input]
+  (w/postwalk unescape-walked-input input))
 
 (defn bgg-details-xml->prey-details [xml]
   (-> xml
-      (str/replace "&amp;#10;" "\n")
-      (str/replace #"&amp;mdash;" " --")
       (bgg-details-xml->bgg-details)
       (bgg-details->prey-details)
-      (reformat)))
+      (flatten-value-only)
+      (unescape-content)))
+
+(defn map-print [input]
+  (clojure.pprint/pprint input)
+  input)
+
+(defn bgg-auction-json->bgg-auction-details [json]
+  (:items (first (map-print (read-json json)))))
+
+(defn auction-details-filter [auction]
+  (dissoc auction :bodyXml :descriptionXml))
+
+
+(defn bgg-auction-details->auction-details [auctions]
+  (map (comp bgg-keys->bgh-keys auction-details-filter) auctions))
+
+
+(defn bgg-auction-json->auction-details [json]
+  (-> json
+      (bgg-auction-json->bgg-auction-details)
+      (bgg-auction-details->auction-details)))
 
 ; BGG's xmlapi does have a search method but it does not (to my knowledge) have pagination or
 ; result limiting. At time of writing, "final" returns 753 results in alphabetical order- not
@@ -119,7 +159,4 @@
         @(http/get "https://api.geekdo.com/api/geekshopper" opts)]
     (if (or error (not= 200 status))
       (throw (ex-info "Auction request failed" resp))
-      body)))
-
-(def prey-id 5737)
-(def auction-result (auction-search prey-id))
+      (bgg-auction-json->auction-details body))))

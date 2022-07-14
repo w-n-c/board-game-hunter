@@ -34,6 +34,7 @@
                  [metosin/ring-http-response "0.9.3"]
                  [mount "0.1.16"]
                  [nrepl "0.9.0"]
+                 [org.apache.commons/commons-text "1.9"]
                  [org.clojure/clojure "1.10.3"]
                  [org.clojure/clojurescript "1.10.914" :scope "provided"]
                  [org.clojure/core.async "1.5.644"]

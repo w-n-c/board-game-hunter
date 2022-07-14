@@ -51,6 +51,12 @@
            :handler (fn [{{{:keys [s]} :query} :parameters}]
                       {:status 200
                        :body (bgg/typeahead s)})}}]
+   ["/prey/:id/auction"
+    {:get {:summary "search for auctions of board game on bgg"
+           :responses {200 {:body map?}}
+           :handler (fn [{{:keys [id]} :path-params}]
+                      {:status 200
+                       :body (bgg/auction-search id)})}}]
    ["/prey/:id"
     {:get {:summary "load bgg details of board game"
            :responses {200 {:body map?}}
